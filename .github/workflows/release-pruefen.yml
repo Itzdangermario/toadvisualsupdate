@@ -1,0 +1,51 @@
+# Prüft jeden veröffentlichten Release. Ist etwas falsch (Version nicht höher, falsche oder fehlende JARs,
+# Testversion nicht als Pre-Release markiert), wird er sofort wieder zum ENTWURF gemacht – so bekommen Spieler
+# nie eine fehlerhafte Benachrichtigung. Dieser Workflow veröffentlicht nie etwas.
+name: Release prüfen
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: releases
+  cancel-in-progress: false
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JARs des Releases laden
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -p jars
+          gh release download "$TAG" --pattern "*.jar" --dir jars || true
+          ls -la jars
+
+      - name: Prüfen
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: node scripts/pruefe-release.mjs veroeffentlicht "$TAG" jars
+
+      - name: Bei Fehler zurück zum Entwurf
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release edit "$TAG" --draft=true
+          echo "### Release $TAG wurde wieder zum Entwurf gemacht" >> "$GITHUB_STEP_SUMMARY"
+          echo "Der Grund steht im Schritt **Prüfen**. Korrigieren und erneut auf **Publish release** klicken." >> "$GITHUB_STEP_SUMMARY"

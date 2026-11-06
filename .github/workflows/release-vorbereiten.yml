@@ -1,0 +1,59 @@
+# Legt einen neuen Release als ENTWURF an. Ein Entwurf ist für Spieler unsichtbar – erst dein Klick auf
+# "Publish release" auf GitHub veröffentlicht ihn. Dieser Workflow veröffentlicht nie etwas.
+name: Release vorbereiten (Entwurf)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versionsnummer, z. B. 2.0.1 (Testversion: 2.0.1-test.1)"
+        required: true
+        type: string
+      testversion:
+        description: "Testversion (nur Spieler mit 'Testversionen anzeigen' sehen sie)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: releases
+  cancel-in-progress: false
+
+jobs:
+  entwurf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Versionsnummer prüfen (Format, noch nicht vorhanden, höher als bisher)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TEST: ${{ inputs.testversion }}
+        run: node scripts/pruefe-release.mjs neu "$VERSION" "$TEST"
+
+      - name: Entwurf anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TEST: ${{ inputs.testversion }}
+        run: |
+          V="${VERSION#v}"
+          if [ "$TEST" = "true" ]; then
+            TITLE="Toad's Visuals $V (TESTVERSION)"
+            EXTRA="--prerelease"
+          else
+            TITLE="Toad's Visuals $V"
+            EXTRA=""
+          fi
+          gh release create "v$V" --draft $EXTRA --target "${{ github.ref_name }}" \
+            --title "$TITLE" --notes-file VORLAGE-RELEASE-NOTIZEN.md
+          echo "### Entwurf v$V angelegt" >> "$GITHUB_STEP_SUMMARY"
+          echo "Jetzt unter **Releases** den Entwurf öffnen (Stift-Symbol), die JARs hineinziehen, die Notizen anpassen und erst dann **Publish release** klicken." >> "$GITHUB_STEP_SUMMARY"
