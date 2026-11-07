@@ -2,8 +2,12 @@
 
 Hier werden neue Versionen von **Toad's Visuals V2** als GitHub-Releases veröffentlicht.
 Das **Update Center** in der Mod fragt beim Start von Minecraft einmal hier nach und zeigt eine Benachrichtigung,
-wenn es eine neuere Version gibt. Die Mod lädt und installiert **nie** etwas selbst: „Update herunterladen“ öffnet
-nur die Release-Seite im Browser.
+wenn es eine neuere Version gibt. Nichts startet ohne Klick des Spielers:
+
+- **Herunterladen & installieren**: lädt die JAR für die Minecraft-Version des Spielers aus dem Release, prüft sie
+  (SHA-256-Prüfsumme von GitHub, Mod-ID, Version, Minecraft- und Fabric-Version) und tauscht sie beim Schließen von
+  Minecraft aus – mit Sicherung der alten JAR; bei einem Fehler bleibt die alte Version. Andere Mods werden nie angefasst.
+- **Update herunterladen**: öffnet nur die Release-Seite im Browser.
 
 ## Was die Mod liest
 
@@ -26,8 +30,8 @@ nur die Release-Seite im Browser.
    „Was ist neu?“).
 3. **Freigeben:** erst wenn alles stimmt, **Publish release** klicken. Das ist deine Freigabe – vorher sieht niemand
    etwas.
-4. Automatisch prüft danach **Release prüfen**: richtige Version in den JARs, höher als alles Bisherige, Testversion
-   als Pre-Release markiert. Stimmt etwas nicht, wird der Release sofort wieder zum Entwurf (Grund unter *Actions*).
+4. Automatisch prüft danach **Release prüfen**: richtige Version in den JARs, SHA-256-Prüfsumme von GitHub vorhanden
+   und passend, höher als alles Bisherige, Testversion als Pre-Release markiert. Stimmt etwas nicht, wird der Release sofort wieder zum Entwurf (Grund unter *Actions*).
 
 ## Testversion (normale Spieler merken nichts)
 

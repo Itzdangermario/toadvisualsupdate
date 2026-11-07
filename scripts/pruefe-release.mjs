@@ -6,10 +6,12 @@
 //       published version. A test version must have a "-test.N" suffix.
 //   node scripts/pruefe-release.mjs veroeffentlicht <tag> <folder with the release JARs>
 //       after "Publish release": tag format, higher than every other published version, the JARs are named
-//       ToadsVisuals-<version>+<minecraft>.jar and really are Toad's Visuals in exactly that version.
+//       ToadsVisuals-<version>+<minecraft>.jar, really are Toad's Visuals in exactly that version, and GitHub's SHA-256
+//       checksum ("digest") of every JAR exists and matches the file (the mod installs only with that checksum).
 //
 // Needs GH_TOKEN and GITHUB_REPOSITORY (both set by GitHub Actions).
 
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { inflateRawSync } from "node:zlib";
@@ -125,7 +127,12 @@ if (mode === "neu") {
   for (const f of jars) {
     const m = f.match(/^ToadsVisuals-(.+)\+([0-9][0-9a-z.\-]*)\.jar$/);
     if (!m || m[1] !== version) fail(`"${f}" passt nicht zum Release: erwartet ToadsVisuals-${version}+<minecraft>.jar`);
-    const raw = readZipEntry(readFileSync(join(arg2, f)), "fabric.mod.json");
+    const buf = readFileSync(join(arg2, f));
+    const asset = (self?.assets ?? []).find((a) => a.name === f);
+    const digest = String(asset?.digest ?? "");
+    if (!/^sha256:[0-9a-f]{64}$/.test(digest)) fail(`"${f}": GitHub hat keine SHA-256-Prüfsumme geliefert – die Datei bitte neu hochladen.`);
+    if (digest.slice(7) !== createHash("sha256").update(buf).digest("hex")) fail(`"${f}": Die SHA-256-Prüfsumme passt nicht zur Datei.`);
+    const raw = readZipEntry(buf, "fabric.mod.json");
     if (!raw) fail(`"${f}" ist keine Fabric-Mod (keine fabric.mod.json).`);
     const meta = JSON.parse(raw.toString("utf8"));
     if (meta.id !== "toadsvisuals") fail(`"${f}" ist nicht Toad's Visuals (id ${meta.id}).`);
