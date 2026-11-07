@@ -1,6 +1,7 @@
 # Prüft jeden veröffentlichten Release. Ist etwas falsch (Version nicht höher, falsche oder fehlende JARs,
 # Testversion nicht als Pre-Release markiert), wird er sofort wieder zum ENTWURF gemacht – so bekommen Spieler
 # nie eine fehlerhafte Benachrichtigung. Dieser Workflow veröffentlicht nie etwas.
+# (Läuft automatisch bei "Publish release"; startet nie selbst eine Veröffentlichung.)
 name: Release prüfen
 
 on:
